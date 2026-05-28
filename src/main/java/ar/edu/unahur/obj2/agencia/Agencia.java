@@ -1,40 +1,49 @@
 package ar.edu.unahur.obj2.agencia;
 
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.Comparator;
 
 import ar.edu.unahur.obj2.cazadores.Cazador;
-import ar.edu.unahur.obj2.zona.Zona;
 import ar.edu.unahur.obj2.profugos.Profugo;
 
 public class Agencia {
+    private static Agencia instancia = new Agencia();
     private Set<Cazador> cazadores = new HashSet<>();
-    private Set<Zona> zonas = new HashSet<>();
+
+    public static Agencia getInstance() {
+        return instancia;
+    }
     
-    public Agencia(Set<Cazador> cazadores, Set<Zona> zonas) {
-        this.cazadores = cazadores;
-        this.zonas = zonas;
+    private Agencia() {}
+
+    public Set<Cazador> getCazadores() {
+        return cazadores;
     }
 
-    public Integer profugosCapturadosEnTotal() {
-        return this.cazadores.stream()
-                .mapToInt(c -> c.getProfugosCapturados().size())
-                .sum();
+    public void agregarCazador(Cazador cazador) {
+        cazadores.add(cazador);
     }
 
-    public Profugo profugoMasHabil() {
-        return this.cazadores.stream()
-                .map(c -> c.profugoMasHabilCapturado())
-                .filter(p -> p != null)
-                .max((p1, p2) -> Integer.compare(p1.getHabilidad(), p2.getHabilidad()))
-                .orElse(null);
+    public Set<Profugo> todosLosProfugosCapturados() {
+        Set<Profugo> profugosCapturados = new HashSet<>();
+        cazadores.forEach(c -> {
+            c.getProfugosCapturados().forEach(p -> {
+                profugosCapturados.add(p);
+            });
+        });
+        return profugosCapturados;
+    }
+
+    
+    public Profugo masHabilCapturado() {
+        return this.todosLosProfugosCapturados().stream()
+            .max(Comparator.comparingInt(p -> p.getHabilidad()))
+            .orElseThrow();
     }
 
     public Cazador cazadorConMasCapturas() {
-        return this.cazadores.stream()
-                .max(Comparator.comparingInt(c -> c.getProfugosCapturados().size()))
-                .orElse(null);
+        return cazadores.stream().max(Comparator.comparingInt(c -> c.getProfugosCapturados().size()))
+            .orElseThrow();
     }
 }

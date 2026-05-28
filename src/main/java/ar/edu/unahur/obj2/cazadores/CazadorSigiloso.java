@@ -3,13 +3,19 @@ package ar.edu.unahur.obj2.cazadores;
 import ar.edu.unahur.obj2.profugos.Profugo;
 
 public class CazadorSigiloso extends Cazador {
-    @Override
-    public Boolean doPuedeCazar(Profugo unProfugo) {
-        return unProfugo.getNivelHabilidad() < 50;
+
+    public CazadorSigiloso(Integer experiencia) {
+        super(experiencia);
     }
 
     @Override
-    public void intimidar(Profugo unProfugo) {
-        unProfugo.setNivelHabilidad(Math.max(unProfugo.getNivelHabilidad() - 5, 0));
+    protected Boolean condicionEspecifica(Profugo profugo) {
+        return profugo.esNervioso();
     }
+
+    @Override
+    protected void intimidacionEspecifica(Profugo profugo) {
+        profugo.reducirHabilidad();
+    }
+
 }

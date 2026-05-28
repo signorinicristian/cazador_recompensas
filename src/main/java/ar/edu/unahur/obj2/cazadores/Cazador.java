@@ -1,65 +1,59 @@
 package ar.edu.unahur.obj2.cazadores;
-import java.util.ArrayList;
+
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
+
 import ar.edu.unahur.obj2.profugos.Profugo;
 import ar.edu.unahur.obj2.zona.Zona;
 
 public abstract class Cazador {
-    protected String nombre;
-    protected Integer cantidadDeExperiencia;
-    protected Set<Profugo> profugosCapturados = new HashSet<Profugo>();
-    protected List<Profugo> intimidados = new ArrayList<>();
+    private Integer experiencia;
 
-    public Cazador() {}
+    private Set<Profugo> profugosCapturados = new HashSet<>();
 
-    public void cazar(Profugo unProfugo) {
-        profugosCapturados.add(unProfugo);
+    public Cazador(Integer experiencia) {
+        this.experiencia = experiencia;
     }
-
-    public abstract void intimidar(Profugo unProfugo);
 
     public Set<Profugo> getProfugosCapturados() {
-        return this.profugosCapturados;
+        return profugosCapturados;
     }
 
-    public void setCantidadDeExperiencia(Integer experiencia) {
-        this.cantidadDeExperiencia = experiencia;
+    protected void intimidar(Profugo profugo) {
+        profugo.disminuirInocencia();
+        this.intimidacionEspecifica(profugo);
     }
 
-    public Integer getCantidadDeExperiencia() {
-        return this.cantidadDeExperiencia;
+    protected void doCapturar(Profugo profugo) {
+        profugosCapturados.add(profugo);
+    }
+
+    protected abstract Boolean condicionEspecifica(Profugo profugo);
+    protected abstract void intimidacionEspecifica(Profugo profugo);
+
+    public Integer getExperiencia() {
+        return experiencia;
+    }
+
+    public void setExperiencia(Integer experiencia) {
+        this.experiencia = experiencia;
     }
 
     public void realizarProcesoDeCaptura(Zona unaZona) {
-        unaZona.getProfugos().stream().forEach(p -> {
-            if(this.puedeCazar(p) && this.doPuedeCazar(p)) {
-                this.cazar(p);
-                this.bonoDeCaza();
+        Set<Profugo> profugosCapturados = new HashSet<>();
+        Set<Profugo> intimidados = new HashSet<>();
+        new HashSet<>(unaZona.getProfugos()).forEach(p -> {
+            if (experiencia > p.getInocencia() && this.condicionEspecifica(p)) {
+                this.doCapturar(p);
+                profugosCapturados.add(p);
+                unaZona.quitarDeBusqueda(p);
             } else {
                 this.intimidar(p);
                 intimidados.add(p);
             }
         });
+        Integer habilidadMinima = intimidados.stream().mapToInt(i -> i.getHabilidad()).min().orElse(0);
+        experiencia += habilidadMinima * (2 * profugosCapturados.size());
 
-    }
-
-    private void bonoDeCaza() {
-        Integer bonoPorIntimidados = this.intimidados.isEmpty() ? 0 :
-            this.intimidados.stream().min((a, b) -> a.getNivelHabilidad().compareTo(b.getNivelHabilidad())).orElse(null).getNivelHabilidad();
-        this.cantidadDeExperiencia += bonoPorIntimidados + 2 * this.profugosCapturados.size();
-    }
-
-    private Boolean puedeCazar(Profugo unProfugo) {
-        return this.cantidadDeExperiencia > unProfugo.getNivelInocencia();
-    }
-
-    protected abstract Boolean doPuedeCazar(Profugo unProfugo);
-    
-    public Profugo profugoMasHabilCapturado() {
-        return this.profugosCapturados.stream()
-            .max((a, b) -> a.getNivelHabilidad().compareTo(b.getNivelHabilidad()))
-            .orElse(null);
     }
 }
